@@ -868,16 +868,49 @@ if(mobileTabs) mobileTabs.innerHTML = '';
 
         function editCurrentSharedDetails() {
             let item, listKey;
-            if(currentModalMode === 'project') { item = projectsData.find(p => p.id === currentOpenId); listKey = 'fullDesc'; } else if(currentModalMode === 'organization') { item = organizationsData.find(o => o.id === currentOpenId); listKey = 'fullDesc'; } else { item = experiencesData.find(e => e.id === currentOpenId); listKey = 'achievements'; }
+            
+            // 1. Tentukan item mana yang sedang diedit
+            if(currentModalMode === 'project') { item = projectsData.find(p => p.id === currentOpenId); listKey = 'fullDesc'; } 
+            else if(currentModalMode === 'organization') { item = organizationsData.find(o => o.id === currentOpenId); listKey = 'fullDesc'; } 
+            else { item = experiencesData.find(e => e.id === currentOpenId); listKey = 'achievements'; }
             if(!item) return;
 
-            const descText = (item[listKey] || []).join('\n\n');
-            openCustomEditModal('Edit Teks Dalam Pop-up', [{id:'dTitle',label:'Title/Role',type:'text',value:item.title || item.role},{id:'dLoc',label:'Subtitle/Company',type:'text',value:item.location || item.company || item.name},{id:'dFull',label:'Detail Point (Enter 2x untuk baris baru)',type:'textarea',rows:6,value:descText}], d=>{
+            // 2. TANGKAP TEKS FALLBACK (Bug Fix Utama)
+            let currentDataArray = item[listKey];
+            if (!currentDataArray || currentDataArray.length === 0) {
+                // Jika array kosong, ambil teks dari shortDesc atau desc
+                currentDataArray = [item.desc || item.shortDesc || ""];
+            }
+            if (!Array.isArray(currentDataArray)) currentDataArray = [currentDataArray];
+
+            // 3. Ubah Pemisah Menjadi Enter 1x (\n)
+            const descText = currentDataArray.join('\n');
+
+            openCustomEditModal('Edit Teks Dalam Pop-up', [
+                {id:'dTitle',label:'Title/Role',type:'text',value:item.title || item.role},
+                {id:'dLoc',label:'Subtitle/Company',type:'text',value:item.location || item.company || item.name},
+                {id:'dFull',label:'Detail Point (Enter 1x untuk baris peluru baru)',type:'textarea',rows:6,value:descText}
+            ], d=>{
+                
+                // Simpan Perubahan Judul & Subjudul
                 if(item.title !== undefined) item.title = d.dTitle; else item.role = d.dTitle;
                 if(item.location !== undefined) item.location = d.dLoc; else if(item.company !== undefined) item.company = d.dLoc; else item.name = d.dLoc;
-                if(d.dFull) item[listKey] = d.dFull.split('\n\n').filter(a => a.trim() !== ''); 
-                if(currentModalMode === 'project') filterProjects('All'); else if(currentModalMode === 'organization') renderOrganizations(); else renderTimeline();
-                openSharedModal(currentOpenId, currentModalMode); markUnsavedChanges();
+                
+                // Simpan Perubahan Core Contributions
+                if(d.dFull) {
+                    item[listKey] = d.dFull.split('\n').map(a => a.trim()).filter(a => a !== ''); 
+                } else {
+                    item[listKey] = [];
+                }
+                
+                // Refresh Background Data
+                if(currentModalMode === 'project') filterProjects('All'); 
+                else if(currentModalMode === 'organization') renderOrganizations(); 
+                else renderTimeline();
+                
+                // Muat Ulang Pop-up & Tandai Unsaved Changes
+                openSharedModal(currentOpenId, currentModalMode); 
+                markUnsavedChanges();
             });
         }
 
