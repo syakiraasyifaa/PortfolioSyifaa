@@ -536,11 +536,11 @@
         function applyDataToDOM(result) {
             const textElements = ['heroTitleLine1', 'heroTitleLine2', 'heroDescText', 'heroTitleText', 'heroRoleText', 'aboutTitle1', 'aboutTitleHighlight', 'aboutTitle2', 'bioP1', 'bioP2', 'eduUni', 'eduMajor', 'eduGpa', 'eduStatus', 'visionTitle', 'visionDesc', 'skillsMainTitle', 'softwareStackTitle', 'expMainTitle', 'expSubDesc', 'orgMainTitle', 'orgSubDesc', 'projMainTitle', 'projSubDesc', 'contactTitle1', 'contactTitle2', 'contactDesc', 'contactCopyright'];
             // Fungsi Otomatis Mengubah **kata** menjadi Teks Highlight Berwarna Oranye
-            const processHighlights = (text) => {
-                if (!text) return "";
-                // Mengganti format **kata** dengan tag HTML span berwarna brand-orange
-                return text.replace(/\*\*(.*?)\*\*/g, '<span class="text-brand-orange font-bold underline decoration-brand-orange underline-offset-4">$1</span>');
-            };
+const processHighlights = (text) => {
+    if (!text) return "";
+    // Mengganti format **kata** dengan tag HTML span berwarna brand-orange
+    return text.replace(/\*\*(.*?)\*\*/g, '<span class="text-brand-orange font-bold">$1</span>');
+};
             textElements.forEach(id => { 
                 if (result.globalData[id] && document.getElementById(id)) {
                     document.getElementById(id).innerHTML = processHighlights(result.globalData[id]);
