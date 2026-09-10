@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
 <head>
@@ -198,6 +197,7 @@
         <input type="file" id="projFrontImageUploadInput" accept="image/*">
         <input type="file" id="modalLogoUploadInput" accept="image/*">
         <input type="file" id="aboutCarouselUploadInput" accept="image/*">
+        <input type="file" id="skillImageUploadInput" accept="image/*">
     </div>
 
     <!-- HOME HERO -->
@@ -549,23 +549,35 @@ const processHighlights = (text) => {
             if (result.globalData.profileImage) document.getElementById('profileImage').src = result.globalData.profileImage;
             if (result.globalData.uniLogo) document.getElementById('uniLogo').src = result.globalData.uniLogo;
             
-            // Auto Migrate Skill Cards to New 3 Column Style (Bg-White)
+            // Auto Migrate Skill Cards to New Style
             if (result.globalData.skillsContainerHTML) {
-                const tempDiv = document.createElement('div'); tempDiv.innerHTML = result.globalData.skillsContainerHTML;
+                const tempDiv = document.createElement('div'); 
+                tempDiv.innerHTML = result.globalData.skillsContainerHTML;
+                
                 tempDiv.querySelectorAll('.bold-card').forEach(card => {
-                   card.className = "bold-card bg-white p-4 lg:p-5 flex flex-col items-start group/card relative z-10 w-full h-full";
-                    const iconCont = card.querySelector('.skill-icon-container'); if(iconCont) iconCont.className = "text-3xl mb-3 skill-icon-container text-brand-dark";
-                    const title = card.querySelector('.skill-title'); if(title) title.className = "font-serif text-xl font-black mb-2 skill-title uppercase leading-tight z-10 text-brand-dark line-clamp-1";
-                    const desc = card.querySelector('.skill-desc'); if(desc) desc.className = "text-xs font-medium flex-grow skill-desc z-10 font-sans text-gray-700 skill-desc-text line-clamp-3";
+                    card.className = "bold-card bg-white p-4 lg:p-5 flex flex-col items-start group/card relative z-10 w-full h-full";
+                    
+                    const iconCont = card.querySelector('.skill-icon-container'); 
+                    if(iconCont) iconCont.className = "w-10 h-10 mb-3 text-3xl skill-icon-container shrink-0 text-brand-dark flex items-center justify-start";
+                    
+                    const title = card.querySelector('.skill-title'); 
+                    if(title) title.className = "font-serif text-xl font-black mb-2 skill-title uppercase leading-tight z-10 text-brand-dark line-clamp-1";
+                    
+                    const desc = card.querySelector('.skill-desc'); 
+                    if(desc) desc.className = "text-xs font-medium flex-grow skill-desc z-10 font-sans text-gray-700 skill-desc-text line-clamp-3";
 
-                    const editBtn = card.querySelector('button[onclick^="editSpecificSkill"]'); const delBtn = card.querySelector('button[onclick^="deleteSkill"]');
-                    if (editBtn && delBtn && !editBtn.parentElement.classList.contains('flex')) {
-                        const btnWrapper = document.createElement('div'); btnWrapper.className = 'admin-control absolute top-4 right-4 flex gap-2 z-20 hidden';
-                        editBtn.className = 'bg-white border-2 border-brand-dark p-2 rounded shadow-brutal hover:bg-brand-orange hover:text-white transition'; editBtn.innerHTML = '<i class="fas fa-edit text-brand-dark pointer-events-none"></i>';
-                        delBtn.className = 'bg-white border-2 border-brand-dark p-2 rounded shadow-brutal hover:bg-red-500 hover:text-white transition'; delBtn.innerHTML = '<i class="fas fa-trash text-red-500 pointer-events-none"></i>';
-                        card.appendChild(btnWrapper); btnWrapper.appendChild(editBtn); btnWrapper.appendChild(delBtn);
-                    }
+                    card.querySelectorAll('.admin-control, button[onclick^="edit"], button[onclick^="delete"], button[onclick^="triggerSkill"]').forEach(el => el.remove());
+
+                    const btnWrapper = document.createElement('div'); 
+                    btnWrapper.className = 'admin-control absolute top-3 right-3 flex gap-2 z-20 hidden';
+                    btnWrapper.innerHTML = `
+                        <button onclick="triggerSkillImageUpload(this)" class="bg-brand-purpleM border-2 border-brand-dark text-white p-1.5 rounded shadow-[2px_2px_0px_0px_#1A0050] hover:bg-brand-dark transition" title="Ganti Icon/Foto"><i class="fas fa-camera text-[10px] pointer-events-none"></i></button>
+                        <button onclick="editSpecificSkillCard(this)" class="bg-white border-2 border-brand-dark p-1.5 rounded shadow-[2px_2px_0px_0px_#1A0050] hover:bg-brand-orange hover:text-white transition"><i class="fas fa-edit text-[10px] text-brand-dark pointer-events-none"></i></button>
+                        <button onclick="deleteSkillCard(this)" class="bg-white border-2 border-brand-dark p-1.5 rounded shadow-[2px_2px_0px_0px_#1A0050] hover:bg-red-500 hover:text-white transition"><i class="fas fa-trash text-[10px] text-red-500 pointer-events-none"></i></button>
+                    `;
+                    card.appendChild(btnWrapper); 
                 });
+                
                 document.getElementById('skillsContainer').innerHTML = tempDiv.innerHTML;
                 if(isAdmin) document.getElementById('skillsContainer').querySelectorAll('.admin-control').forEach(el=>el.classList.remove('hidden'));
             }
@@ -672,27 +684,42 @@ const processHighlights = (text) => {
         function closeCustomEditModal() { document.getElementById('customEditModal').classList.add('hidden'); }
 
         // SKILLS
+        let currentSkillIconContainer = null;
+        function triggerSkillImageUpload(btn) {
+            event.stopPropagation();
+            currentSkillIconContainer = btn.closest('.bold-card').querySelector('.skill-icon-container');
+            document.getElementById('skillImageUploadInput').click();
+        }
+
         function addSkillCard() {
-            openCustomEditModal('Add Skill', [{id:'t',label:'Title',type:'text',value:''},{id:'d',label:'Desc (Enter for Bullets)',type:'textarea',value:''},{id:'i',label:'Icon Class (e.g. fas fa-tree)',type:'text',value:'fas fa-star'}], d=>{
+            openCustomEditModal('Add Skill', [{id:'t',label:'Title',type:'text',value:''},{id:'d',label:'Desc (Enter for Bullets)',type:'textarea',value:''}], d=>{
                 if(!d.t) return;
                 const html = `<div class="bold-card bg-white p-4 lg:p-5 flex flex-col items-start group/card relative z-10 w-full h-full">
                     <div class="admin-control absolute top-3 right-3 flex gap-2 z-20 ${isAdmin?'':'hidden'}">
+                        <button onclick="triggerSkillImageUpload(this)" class="bg-brand-purpleM border-2 border-brand-dark text-white p-1.5 rounded shadow-[2px_2px_0px_0px_#1A0050] hover:bg-brand-dark transition" title="Ganti Icon/Foto"><i class="fas fa-camera text-[10px] pointer-events-none"></i></button>
                         <button onclick="editSpecificSkillCard(this)" class="bg-white border-2 border-brand-dark p-1.5 rounded shadow-[2px_2px_0px_0px_#1A0050] hover:bg-brand-orange hover:text-white transition"><i class="fas fa-edit text-[10px] text-brand-dark pointer-events-none"></i></button>
                         <button onclick="deleteSkillCard(this)" class="bg-white border-2 border-brand-dark p-1.5 rounded shadow-[2px_2px_0px_0px_#1A0050] hover:bg-red-500 hover:text-white transition"><i class="fas fa-trash text-[10px] text-red-500 pointer-events-none"></i></button>
                     </div>
-                    <div class="text-3xl mb-3 skill-icon-container text-brand-dark"><i class="${d.i}"></i></div>
+                    <div class="w-10 h-10 mb-3 skill-icon-container shrink-0 flex items-center justify-start"><img src="https://placehold.co/100x100?text=Icon" class="w-full h-full object-contain skill-icon-img"></div>
                     <h3 class="font-serif text-xl font-black mb-2 skill-title uppercase leading-tight z-10 text-brand-dark line-clamp-1" title="${d.t}">${d.t}</h3>
                     <p class="text-xs font-medium flex-grow skill-desc z-10 font-sans text-gray-700 skill-desc-text line-clamp-3" title="${d.d}">${d.d}</p>
                 </div>`;
                 document.getElementById('skillsContainer').insertAdjacentHTML('beforeend', html); markUnsavedChanges();
             });
         }
+        
         function editSpecificSkillCard(btn) {
             const card = btn.closest('.bold-card');
             openCustomEditModal('Edit Skill', [
-                {id:'t',label:'Title',type:'text',value:card.querySelector('.skill-title').innerText}, {id:'d',label:'Desc (Enter for Bullets)',type:'textarea',value:card.querySelector('.skill-desc').innerText}, {id:'i',label:'Icon Class',type:'text',value:card.querySelector('.skill-icon-container i').className}
-            ], d=>{ card.querySelector('.skill-title').innerText=d.t; card.querySelector('.skill-desc').innerText=d.d; card.querySelector('.skill-icon-container i').className=d.i; markUnsavedChanges(); });
+                {id:'t',label:'Title',type:'text',value:card.querySelector('.skill-title').innerText}, 
+                {id:'d',label:'Desc (Enter for Bullets)',type:'textarea',value:card.querySelector('.skill-desc').innerText}
+            ], d=>{ 
+                card.querySelector('.skill-title').innerText=d.t; 
+                card.querySelector('.skill-desc').innerText=d.d; 
+                markUnsavedChanges(); 
+            });
         }
+        
         function deleteSkillCard(btn) { showConfirmModal("Hapus Skill Card ini?", () => { btn.closest('.bold-card').remove(); markUnsavedChanges(); }); }
 
         // EXPERIENCE (ACCORDION HOVER)
@@ -765,15 +792,13 @@ const processHighlights = (text) => {
 
         // PROJECTS
         let projectsData = [ { id: 1, title: "Shoreline", category: "GIS", location: "Subang", shortDesc: "Modeling.", fullDesc: ["Modeled DSAS."], coverImage: "https://images.unsplash.com/photo-1620127252536-049e9e6231d6?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", images: [], captions: [] } ];
-        // 1. FUNGSI BARU: Merender Tab Kategori Secara Otomatis
         function renderProjectTabs(activeFilter) {
             const tabsContainer = document.getElementById('projectFilterTabs');
-            const navDropdown = document.getElementById('navProjectDropdown'); // Wadah dropdown navigasi
+            const navDropdown = document.getElementById('navProjectDropdown'); 
             const mobileTabs = document.getElementById('mobileProjectTabs');
-if(mobileTabs) mobileTabs.innerHTML = '';
+            if(mobileTabs) mobileTabs.innerHTML = '';
             if (!tabsContainer && !navDropdown) return;
             
-            // Ambil nama kategori unik secara otomatis
             const categories = ['All', ...new Set(projectsData.map(p => p.category || 'Uncategorized'))];
             
             if(tabsContainer) tabsContainer.innerHTML = '';
@@ -782,7 +807,6 @@ if(mobileTabs) mobileTabs.innerHTML = '';
             categories.forEach(cat => {
                 const isActive = cat === activeFilter;
                 
-                // 1. Render untuk Tab di bagian utama
                 if(tabsContainer) {
                     const activeClass = isActive 
                         ? "px-4 py-2 border-2 border-brand-dark bg-brand-purpleM text-white text-xs font-black uppercase shadow-[2px_2px_0px_0px_#1A0050] rounded cursor-default"
@@ -790,23 +814,18 @@ if(mobileTabs) mobileTabs.innerHTML = '';
                     tabsContainer.innerHTML += `<button onclick="filterProjects('${cat}')" class="${activeClass}">${cat}</button>`;
                 }
                 
-                // 2. Render untuk Dropdown di Navigasi Atas
                 if(navDropdown) {
                     navDropdown.innerHTML += `<a href="#projects" onclick="filterProjects('${cat}')" class="px-4 py-2.5 hover:bg-brand-purpleM hover:text-white border-b-2 border-brand-dark last:border-b-0 transition flex items-center justify-between text-xs font-black uppercase group/item">${cat} ${isActive ? '<i class="fas fa-check text-brand-orange group-hover/item:text-white"></i>' : ''}</a>`;
                 }
                 
-                // 3. Render untuk Dropdown Mobile Menu
                 if(mobileTabs) {
                     mobileTabs.innerHTML += `<a href="#projects" onclick="filterProjects('${cat}'); document.getElementById('mobile-menu').classList.add('hidden');" class="text-gray-600 hover:text-brand-orange uppercase font-bold transition flex items-center justify-center gap-2">${cat} ${isActive ? '<i class="fas fa-check text-brand-orange"></i>' : ''}</a>`;
                 }
             });
         }
 
-        // 2. FUNGSI FILTER YANG DIPERBARUI
         function filterProjects(filterVal) {
             const grid = document.getElementById('projectsGrid'); grid.innerHTML = '';
-            
-            // Panggil pembuatan tombol tab kategori di atas
             renderProjectTabs(filterVal);
             
             const projDisplay = document.getElementById('projCountDisplay'); if(projDisplay) projDisplay.innerText = projectsData.length;
@@ -869,21 +888,17 @@ if(mobileTabs) mobileTabs.innerHTML = '';
         function editCurrentSharedDetails() {
             let item, listKey;
             
-            // 1. Tentukan item mana yang sedang diedit
             if(currentModalMode === 'project') { item = projectsData.find(p => p.id === currentOpenId); listKey = 'fullDesc'; } 
             else if(currentModalMode === 'organization') { item = organizationsData.find(o => o.id === currentOpenId); listKey = 'fullDesc'; } 
             else { item = experiencesData.find(e => e.id === currentOpenId); listKey = 'achievements'; }
             if(!item) return;
 
-            // 2. TANGKAP TEKS FALLBACK (Bug Fix Utama)
             let currentDataArray = item[listKey];
             if (!currentDataArray || currentDataArray.length === 0) {
-                // Jika array kosong, ambil teks dari shortDesc atau desc
                 currentDataArray = [item.desc || item.shortDesc || ""];
             }
             if (!Array.isArray(currentDataArray)) currentDataArray = [currentDataArray];
 
-            // 3. Ubah Pemisah Menjadi Enter 1x (\n)
             const descText = currentDataArray.join('\n');
 
             openCustomEditModal('Edit Teks Dalam Pop-up', [
@@ -892,7 +907,6 @@ if(mobileTabs) mobileTabs.innerHTML = '';
                 {id:'dFull',label:'Detail Point (Enter 1x untuk baris peluru baru)',type:'textarea',rows:6,value:descText}
             ], d=>{
                 
-                // SOLUSI BUG: Simpan Perubahan Judul & Subjudul secara spesifik berdasarkan mode
                 if (currentModalMode === 'project') {
                     item.title = d.dTitle;
                     item.location = d.dLoc;
@@ -904,19 +918,16 @@ if(mobileTabs) mobileTabs.innerHTML = '';
                     item.company = d.dLoc;
                 }
                 
-                // Simpan Perubahan Core Contributions
                 if(d.dFull) {
                     item[listKey] = d.dFull.split('\n').map(a => a.trim()).filter(a => a !== ''); 
                 } else {
                     item[listKey] = [];
                 }
                 
-                // Refresh Background Data
                 if(currentModalMode === 'project') filterProjects('All'); 
                 else if(currentModalMode === 'organization') renderOrganizations(); 
                 else renderTimeline();
                 
-                // Muat Ulang Pop-up & Tandai Unsaved Changes
                 openSharedModal(currentOpenId, currentModalMode); 
                 markUnsavedChanges();
             });
@@ -932,7 +943,6 @@ if(mobileTabs) mobileTabs.innerHTML = '';
             
             const img = document.getElementById('modalImage'), cap = document.getElementById('modalImageCaption'), dots = document.getElementById('modalGalleryDots');
             
-            // SOLUSI ANIMASI: Pudar-hilangkan gambar lama (Fade Out)
             img.style.opacity = '0';
             
             setTimeout(() => {
@@ -941,16 +951,14 @@ if(mobileTabs) mobileTabs.innerHTML = '';
                     cap.innerText = item.captions ? (item.captions[currentGalleryIndex] || '') : ''; 
                     cap.classList.remove('hidden'); 
                     
-                    // Pudar-masukkan gambar baru hanya saat berhasil dimuat (Fade In)
                     img.onload = () => { img.style.opacity = '1'; };
-                    // Fallback waktu jika gambar di-*cache* (langsung muncul)
                     setTimeout(() => { img.style.opacity = '1'; }, 100); 
                 } else { 
                     img.src = ''; 
                     cap.classList.add('hidden'); 
                     img.style.opacity = '1';
                 }
-            }, 250); // Jeda kecil untuk membiarkan CSS fade-out selesai bermain
+            }, 250);
 
             dots.innerHTML=''; 
             if(item.images && item.images.length > 1) { 
@@ -959,6 +967,7 @@ if(mobileTabs) mobileTabs.innerHTML = '';
                 }); 
             }
         }
+        
         function nextModalImage() { let item = currentModalMode === 'project' ? projectsData.find(p=>p.id===currentOpenId) : (currentModalMode === 'organization' ? organizationsData.find(o=>o.id===currentOpenId) : experiencesData.find(e=>e.id===currentOpenId)); if(!item || item.images.length<=1) return; currentGalleryIndex=(currentGalleryIndex+1)%item.images.length; updateGalleryView(); }
         function prevModalImage() { let item = currentModalMode === 'project' ? projectsData.find(p=>p.id===currentOpenId) : (currentModalMode === 'organization' ? organizationsData.find(o=>o.id===currentOpenId) : experiencesData.find(e=>e.id===currentOpenId)); if(!item || item.images.length<=1) return; currentGalleryIndex=(currentGalleryIndex-1+item.images.length)%item.images.length; updateGalleryView(); }
         
@@ -1004,9 +1013,6 @@ if(mobileTabs) mobileTabs.innerHTML = '';
                 container.appendChild(tagDiv); if (isAdmin) tagDiv.querySelectorAll('.admin-control').forEach(el => el.classList.remove('hidden')); markUnsavedChanges();
             });
         }
-        function addExperienceCard() { openCustomEditModal('Add Experience', [{id:'t',label:'Job Title',type:'text',value:''},{id:'c',label:'Company',type:'text',value:''},{id:'d',label:'Date',type:'text',value:''},{id:'desc',label:'Short Desc',type:'textarea',value:''}], d=>{ if(!d.t) return; experiencesData.push({ id: Date.now(), title: d.t, company: d.c, date: d.d, desc: d.desc, achievements:["New Role"], images:["https://placehold.co/600x400?text=New"], captions:[""] }); renderTimeline(); markUnsavedChanges(); }); }
-        function addOrgCard() { openCustomEditModal('Add Organization', [{ id: 'nRole', label: 'Role / Posisi', type: 'text', value: '' }, { id: 'nName', label: 'Organization Name', type: 'text', value: '' }, { id: 'nDate', label: 'Date Range', type: 'text', value: '' }, { id: 'nDesc', label: 'Description', type: 'textarea', rows: 3, value: '' }], d => { if(!d.nRole) return; organizationsData.push({ id: Date.now(), role: d.nRole, name: d.nName, date: d.nDate, desc: d.nDesc, fullDesc: ["Detail point 1..."], bgImage: "https://placehold.co/800x600?text=Org+Image", images: ["https://placehold.co/800x600?text=Org+Image"] }); renderOrganizations(); markUnsavedChanges(); }); }
-        function addProjectCard() { openCustomEditModal('Add Project', [{id:'t',label:'Project Title',type:'text',value:''},{id:'c',label:'Category',type:'text',value:''},{id:'d',label:'Short Desc',type:'textarea',value:''}], d=>{ if(!d.t) return; projectsData.unshift({ id: Date.now(), title: d.t, category: d.c || 'Uncategorized', shortDesc: d.d, coverImage: "https://placehold.co/600x400?text=Cover+Image", fullDesc:[d.d], images:[], captions:[] }); filterProjects('All'); markUnsavedChanges(); }); }
         
         let currentTagToEdit = null;
         function editTagImage(element) {
@@ -1017,7 +1023,8 @@ if(mobileTabs) mobileTabs.innerHTML = '';
         document.getElementById('tagImageUploadInput').addEventListener('change', function(e) { const f = e.target.files[0]; if (f && currentTagToEdit) { const r = new FileReader(); r.onload = async ev => { const u = await uploadImageToDriveAndGetUrl(f, ev.target.result); if (u) { currentTagToEdit.src = u; markUnsavedChanges(); } }; r.readAsDataURL(f); } e.target.value = ''; });
         function editTagText(el) { if (!isAdmin) return; openCustomEditModal('Edit Software', [{id:'txt', label:'Name', type:'text', value:el.innerText}], d => { el.innerText = d.txt; markUnsavedChanges(); }); }
         function deleteSoftwareTag(btn) { showConfirmModal("Hapus tool ini?", () => { btn.closest('.group\\/tag').remove(); markUnsavedChanges(); }); }
-    // PENGELOLAAN CAROUSEL ABOUT
+
+        // PENGELOLAAN CAROUSEL ABOUT
         let aboutCarouselData = ["https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80", "https://images.unsplash.com/photo-1611273426858-450d8e81430c?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80", "https://images.unsplash.com/photo-1620127252536-049e9e6231d6?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80"]; 
         
         function renderAboutCarousel() {
@@ -1035,7 +1042,6 @@ if(mobileTabs) mobileTabs.innerHTML = '';
                 </div>`;
             });
             
-            // Digandakan agar animasinya bisa berputar tanpa batas (seamless loop)
             wrapper.innerHTML = itemsHTML + itemsHTML;
             if(isAdmin) wrapper.querySelectorAll('.admin-control').forEach(el=>el.classList.remove('hidden'));
         }
@@ -1053,19 +1059,19 @@ if(mobileTabs) mobileTabs.innerHTML = '';
         function deleteAboutCarouselImage(idx) {
             showConfirmModal("Hapus foto ini dari carousel?", () => { aboutCarouselData.splice(idx, 1); renderAboutCarousel(); markUnsavedChanges(); });
         }
-       // ==========================================
-        // SISTEM CROPPER & UPLOAD SENTRALISASI (BUG FIXED)
+
+        // ==========================================
+        // SISTEM CROPPER & UPLOAD SENTRALISASI
         // ==========================================
         let cropperInstance = null; let currentCropCallback = null;
 
-        // 1. Matikan event upload lama secara aman & spesifik
         document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 const inputIds = [
                     'profileUploadInput', 'wallpaperUploadInput', 'uniLogoUploadInput', 
                     'tagImageUploadInput', 'expCoverUploadInput', 'orgBgImageUploadInput', 
                     'projFrontImageUploadInput', 'modalLogoUploadInput', 'expGalleryUploadInput',
-                    'aboutCarouselUploadInput'
+                    'aboutCarouselUploadInput', 'skillImageUploadInput'
                 ];
                 inputIds.forEach(id => {
                     const el = document.getElementById(id);
@@ -1078,7 +1084,6 @@ if(mobileTabs) mobileTabs.innerHTML = '';
             }, 500); 
         });
 
-        // 2. Tampilkan Layar Pemotong Gambar
         function processImageWithCropper(file, aspectRatio, callback) {
             if(!file) return; const reader = new FileReader();
             reader.onload = (e) => {
@@ -1105,31 +1110,25 @@ if(mobileTabs) mobileTabs.innerHTML = '';
             }, 300);
         }
 
-        // 3. Eksekusi Hasil Pemotongan & Kirim ke Drive (FIX: Callback diamankan)
         async function executeCropAndUpload() {
             if(!cropperInstance || !currentCropCallback) return;
-            // fillColor: '#fff' mencegah foto transparan (PNG) berubah jadi hitam
             const canvas = cropperInstance.getCroppedCanvas({ maxWidth: 1920, maxHeight: 1920, fillColor: '#fff' });
             if(!canvas) { closeCropperModal(); return; }
             
-            // SIMPAN memori tugas sebelum modal ditutup
             const savedCallback = currentCropCallback; 
             
             showLoading("UPLOADING CROP..."); closeCropperModal();
             const base64Data = canvas.toDataURL('image/jpeg', 0.85); 
             const simulatedFile = { name: "cropped_image.jpg", type: "image/jpeg" };
             
-            // Menunggu respon dari Google Drive
             const url = await uploadImageToDriveAndGetUrl(simulatedFile, base64Data);
             
-            // Menjalankan memori tugas yang sudah disimpan
             if(url) { 
                 savedCallback(url); 
                 markUnsavedChanges(); 
             }
         }
 
-        // 4. Rute Spesifik untuk Tiap Input Gambar
         function attachCropperListeners() {
             const attach = (id, ratio, callback) => {
                 const el = document.getElementById(id);
@@ -1146,6 +1145,13 @@ if(mobileTabs) mobileTabs.innerHTML = '';
             attach('modalLogoUploadInput', 1/1, (url) => { let item; if(currentModalMode==='project') item = projectsData.find(p=>p.id===currentOpenId); else if(currentModalMode==='organization') item=organizationsData.find(o=>o.id===currentOpenId); else item=experiencesData.find(ex=>ex.id===currentOpenId); if(item) { item.instLogo = url; document.getElementById('modalLogo').src = url; document.getElementById('modalLogo').classList.remove('hidden'); document.getElementById('modalIcon').classList.add('hidden'); } });
             attach('expGalleryUploadInput', NaN, (url) => { let item; if(currentModalMode==='project') item = projectsData.find(p=>p.id===currentOpenId); else if(currentModalMode==='organization') item=organizationsData.find(o=>o.id===currentOpenId); else item=experiencesData.find(ex=>ex.id===currentOpenId); if(item) { if(!item.images) item.images=[]; if(!item.captions) item.captions=[]; item.images.push(url); item.captions.push(prompt("Caption Foto:")||''); currentGalleryIndex = item.images.length-1; updateGalleryView(); } });
             attach('aboutCarouselUploadInput', NaN, (url) => { if(typeof aboutCarouselData !== 'undefined') { aboutCarouselData.push(url); if(typeof renderAboutCarousel === 'function') renderAboutCarousel(); } });
+            
+            attach('skillImageUploadInput', 1/1, (url) => { 
+                if (currentSkillIconContainer) {
+                    currentSkillIconContainer.innerHTML = `<img src="${url}" class="w-full h-full object-contain skill-icon-img">`;
+                    markUnsavedChanges();
+                }
+            });
         }
     </script>
 </body>
