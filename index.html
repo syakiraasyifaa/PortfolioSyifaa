@@ -858,8 +858,13 @@ const html = `<div class="bold-card bg-white p-4 lg:p-5 flex flex-col items-star
             
             const achContainer = document.getElementById('modalAchievements'); achContainer.innerHTML = '';
             const listData = (mode === 'project' || mode === 'organization') ? (item.fullDesc || [item.desc || item.shortDesc]) : item.achievements;
-            listData.forEach(ach => { achContainer.innerHTML += `<li class="flex items-start gap-3"><i class="fas fa-check-circle text-brand-purpleL mt-1 text-xs"></i><span>${ach}</span></li>`; });
-            
+            listData.forEach(ach => { 
+                // Mengonversi tanda ** menjadi highlight berwarna oranye
+                const formattedAch = ach.replace(/\*\*(.*?)\*\*/g, '<span class="text-brand-orange font-bold">$1</span>');
+                
+                // Mencetak teks yang sudah diformat ke dalam pop-up
+                achContainer.innerHTML += `<li class="flex items-start gap-3"><i class="fas fa-check-circle text-brand-purpleL mt-1 text-xs shrink-0"></i><span class="text-justify w-full">${formattedAch}</span></li>`; 
+            });
             updateGalleryView(); const m = document.getElementById('sharedDetailModal'), c = document.getElementById('sharedModalContent');
             m.classList.remove('hidden'); setTimeout(() => { m.classList.remove('opacity-0'); c.classList.remove('scale-95'); }, 10);
             if(isAdmin) m.querySelectorAll('.admin-control').forEach(el=>el.classList.remove('hidden'));
